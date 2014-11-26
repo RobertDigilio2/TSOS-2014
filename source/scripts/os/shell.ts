@@ -74,6 +74,14 @@ module TSOS {
                                   "prompt",
                                   "<string> - Sets the prompt.");
             this.commandList[this.commandList.length] = sc;
+            
+            //status
+            sc = new ShellCommand(this.shellStatusUpdate, "status", "<string> - Sets the status");
+            this.commandList[this.commandList.length] = sc;
+            
+            //Date&Time
+           sc = new ShellCommand(this.shellDateTime, "datetime", "- Self-explanatory.");
+            this.commandList[this.commandList.length] = sc;
 
             // processes - list the running processes and their IDs
             // kill <id> - kills the specified process id.
@@ -278,6 +286,59 @@ module TSOS {
                 _StdOut.putText("Usage: prompt <string>  Please supply a string.");
             }
         }
+        
+        public shellStatusUpdate(args)
+        {
+            if (args.length > 0) {
+                STATUS = args[0];
+            } else {
+                _StdOut.putText("Usage: status <string>  Please supply a string.");
+            }
+        }
+        
+        public shellDateTime()
+        {
+            var d = new Date();
+            d.setTime(Date.now());
+            var day = d.getDay();
+            var _day = "";
+                switch(day){
+                    case 0:
+                        _day = "Sun.";
+                        break;
+                    case 1:
+                        _day = "Mon.";
+                        break;
+                    case 2:
+                        _day = "Tues.";
+                        break;
+                    case 3:
+                        _day = "Wed.";
+                        break;
+                    case 4:
+                        _day = "Thurs.";
+                        break;
+                    case 5:
+                        _day = "Fri.";
+                        break;
+                    case 6:
+                        _day = "Sat.";
+                        break;
+                    default:
+                        "Not a valaid day."
+                        break;
+                }
 
+            _StdOut.putText("Date: " + _day + ", " + (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear());
+            _StdOut.advanceLine();
+            var hours = d.getHours();
+            if(hours > 12) {
+                _StdOut.putText("Time: " + (hours - 12) + ":" + d.getMinutes() + ":" + d.getSeconds() + " P.M.");
+            }
+            else
+            {
+                _StdOut.putText("Time: " + hours + ":" + d.getMinutes() + ":" + d.getSeconds() + " A.M.");
+            }
+        }
     }
 }
