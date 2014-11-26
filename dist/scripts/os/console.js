@@ -8,16 +8,20 @@ Note: This is not the Shell.  The Shell is the "command line interface" (CLI) or
 var TSOS;
 (function (TSOS) {
     var Console = (function () {
-        function Console(currentFont, currentFontSize, currentXPosition, currentYPosition, buffer) {
+        function Console(currentFont, currentFontSize, currentXPosition, currentYPosition, prevEntry, prevEntryIndex, buffer) {
             if (typeof currentFont === "undefined") { currentFont = _DefaultFontFamily; }
             if (typeof currentFontSize === "undefined") { currentFontSize = _DefaultFontSize; }
             if (typeof currentXPosition === "undefined") { currentXPosition = 0; }
             if (typeof currentYPosition === "undefined") { currentYPosition = _DefaultFontSize; }
+            if (typeof prevEntry === "undefined") { prevEntry = []; }
+            if (typeof prevEntryIndex === "undefined") { prevEntryIndex = prevEntry.length; }
             if (typeof buffer === "undefined") { buffer = ""; }
             this.currentFont = currentFont;
             this.currentFontSize = currentFontSize;
             this.currentXPosition = currentXPosition;
             this.currentYPosition = currentYPosition;
+            this.prevEntry = prevEntry;
+            this.prevEntryIndex = prevEntryIndex;
             this.buffer = buffer;
         }
         Console.prototype.init = function () {
@@ -47,13 +51,62 @@ var TSOS;
 
                     // ... and reset our buffer.
                     this.buffer = "";
+                    
+                    this.prevEntry[this.prevEntry.length] = this.buffer;
+                    this.prevEntryIndex = this.prevEntry.length;
+                    
                 } else {
-                    // This is a "normal" character, so ...
-                    // ... draw it on the screen...
-                    this.putText(chr);
+                    if (chr === String.fromCharCode(8)) {
+                        var clearChar = this.buffer.charAt(this.buffer.length - 1);
+                        this.buffer = this.buffer.substring(0, this.buffer.length - 1);
+                        this.backSpace(clearChar);
 
-                    // ... and add it to our buffer.
-                    this.buffer += chr;
+                    } else {
+                        //Tab
+                        if (chr == String.fromCharCode(9)) {
+                            var currentBuffer = this.buffer.toString();
+                            var foundMatch = false;
+                            var currentCommands = ["ver", "help", "shutdown", "cls", "man", "trace", "rot13", "prompt", "status", "datetime"];
+ 
+                            for (var k = 0; k < currentCommands.length; k++) {
+                                if ((this.contains(currentBuffer, currentCommands[k])) && foundMatch == false) {
+                                    currentBuffer = currentCommands[k];
+                                    foundMatch = true;
+                                }
+                            }
+
+                            if (foundMatch) {
+                                this.replaceBuffer(currentBuffer);
+                            }
+                        } else {
+                            if (chr == "up") {
+                                if (this.prevEntryIndex > 0) {
+                                    var prevEntryCommand = this.prevEntry[this.prevEntryIndex - 1];
+                                    this.replaceBuffer(prevEntryCommand);
+                                    this.prevEntryIndex = this.prevEntryIndex - 1;
+                                }
+                            } else {
+                                if (chr == "down") {
+                                    if (this.prevEntryIndex < this.prevEntry.length - 1) {
+                                        var prevEntryCommand = this.prevEntry[this.prevEntryIndex + 1];
+                                        this.replaceBuffer(prevEntryCommand);
+                                        this.prevEntryIndex = this.prevEntryIndex + 1;
+                                    }
+                                } else {
+                                    // This is a "normal" character, so ...
+                                    // ... draw it on the screen...
+                                    //the first wrapping text attempt
+                                    // if ((this.buffer.length % 47) == 0 && this.buffer.length != 0) {
+                                    //   this.advanceLine();
+                                    //}
+                                    this.putText(chr);
+
+                                    // ... and add it to our buffer.
+                                    this.buffer += chr;
+                                }
+                            }
+                        }
+                    }
                 }
                 // TODO: Write a case for Ctrl-C.
             }
@@ -86,6 +139,44 @@ var TSOS;
             */
             this.currentYPosition += _DefaultFontSize + _DrawingContext.fontDescent(this.currentFont, this.currentFontSize) + _FontHeightMargin;
             // TODO: Handle scrolling. (Project 1)
+            //size of buffer is 29
+        };
+        Console.prototype.backSpace = function (text) {
+            var length = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
+            var height = _DefaultFontSize + _FontHeightMargin;
+            _DrawingContext.clearRect(this.currentXPosition - length, ((this.currentYPosition - height) + 5), length, height);
+            if (this.currentXPosition > 0) {
+                this.currentXPosition = this.currentXPosition - length;
+            }
+        };
+        //Checks for smaller string in larger string
+        Console.prototype.contains = function (smallString, largeString) {
+            var stillMatching = true;
+            if (smallString.length >= largeString.length) {
+                return false;
+            } else {
+                for (var i = 0; i < smallString.length; i++) {
+                    if (smallString.charAt(i) != largeString.charAt(i)) {
+                        stillMatching = false;
+                    }
+                }
+            }
+            return stillMatching;
+        };
+
+        //Replace buffer on screen
+        Console.prototype.replaceBuffer = function (text) {
+            for (var i = this.buffer.length; i > 0; i--) {
+                var clearChar = this.buffer.charAt(this.buffer.length - 1);
+                this.buffer = this.buffer.substring(0, this.buffer.length - 1);
+                this.backSpace(clearChar);
+            }
+
+            //Add new characters in buffer
+            this.buffer = text;
+            for (var j = 0; j < this.buffer.length; j++) {
+                this.putText(this.buffer.charAt(j));
+            }
         };
         return Console;
     })();
