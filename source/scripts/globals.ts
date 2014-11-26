@@ -13,7 +13,8 @@
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.
 //
 var APP_NAME: string    = "ROBOS";   // 'cause Bob and I were at a loss for a better name.
-var APP_VERSION: string = "0.25";   // What did you expect?
+var APP_VERSION: string = "0.50";   // What did you expect?
+var STATUS: string = "Type command: status <string> to change your status";
 
 var CPU_CLOCK_INTERVAL: number = 100;   // This is in ms, or milliseconds, so 1000 = 1 second.
 
