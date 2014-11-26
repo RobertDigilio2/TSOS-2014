@@ -17,6 +17,8 @@ module TSOS {
                     public currentFontSize = _DefaultFontSize,
                     public currentXPosition = 0,
                     public currentYPosition = _DefaultFontSize,
+                    public prevEntry = [],
+                    public prevEntryIndex = prevEntry.length,
                     public buffer = "") {
 
         }
@@ -46,12 +48,69 @@ module TSOS {
                     _OsShell.handleInput(this.buffer);
                     // ... and reset our buffer.
                     this.buffer = "";
+                    
+                    this.prevEntry[this.prevEntry.length] = this.buffer;
+                    this.prevEntryIndex = this.prevEntry.length;
+                    
                 } else {
-                    // This is a "normal" character, so ...
-                    // ... draw it on the screen...
-                    this.putText(chr);
-                    // ... and add it to our buffer.
-                    this.buffer += chr;
+                    //Backspace
+                    if (chr === String.fromCharCode(8)) { 
+                        var clearChar = this.buffer.charAt(this.buffer.length - 1)
+                        this.buffer = this.buffer.substring(0, this.buffer.length - 1);
+                        this.backSpace(clearChar);
+                    }
+                    else {
+                        //Tab
+                        if(chr == String.fromCharCode(9)){ //
+                            var currentBuffer = this.buffer.toString();
+                            var foundMatch = false;
+                            var currentCommands = ["ver","help","shutdown","cls","man","trace","rot13","prompt","status","datetime"];
+                            for(var k = 0; k < currentCommands.length; k++) {
+                                if ((this.contains(currentBuffer, currentCommands[k])) && foundMatch == false) {
+                                    currentBuffer = currentCommands[k];
+                                    foundMatch = true;
+                                }
+                            }
+
+                            if(foundMatch)
+                            {
+                                this.replaceBuffer(currentBuffer);
+                            }
+                        }
+                        else {
+                            //Up and Down Arrow
+                            if(chr == "up"){
+                                if(this.prevEntryIndex >  0)
+                                {
+                                    var prevEntryCommand = this.prevEntry[this.prevEntryIndex - 1]
+                                    this.replaceBuffer(prevEntryCommand);
+                                    this.prevEntryIndex = this.prevEntryIndex - 1;
+                                }
+                            }
+                            else {
+                                    if(chr =="down")
+                                    {
+                                        if(this.prevEntryIndex < this.prevEntry.length - 1)
+                                        {
+                                            var prevEntryCommand = this.prevEntry[this.prevEntryIndex + 1]
+                                            this.replaceBuffer(prevEntryCommand);
+                                            this.prevEntryIndex = this.prevEntryIndex + 1;
+                                        }
+                                    }
+                                else {
+                                        // This is a "normal" character, so ...
+                                        // ... draw it on the screen...
+                                        //the first wrapping text attempt
+                                        // if ((this.buffer.length % 47) == 0 && this.buffer.length != 0) {
+                                        //   this.advanceLine();
+                                        //}
+                                        this.putText(chr);
+                                        // ... and add it to our buffer.
+                                        this.buffer += chr;
+                                    }
+                            }
+                        }
+                    }
                 }
                 // TODO: Write a case for Ctrl-C.
             }
@@ -85,6 +144,49 @@ module TSOS {
                                      _FontHeightMargin;
 
             // TODO: Handle scrolling. (Project 1)
+            //size of buffer is 29
+        }
+        public backSpace(text): void{
+            var length = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
+            var height = _DefaultFontSize + _FontHeightMargin;
+            _DrawingContext.clearRect(this.currentXPosition - length, ((this.currentYPosition - height) + 5), length, height);
+            if(this.currentXPosition > 0)
+            {
+                this.currentXPosition = this.currentXPosition - length;
+            }
+        }
+        //Checks for smaller string in larger string
+        public contains(smallString, largeString): boolean{
+            var stillMatching = true;
+            if(smallString.length >= largeString.length)
+            {
+                return false;
+            }
+            else {
+                for (var i = 0; i < smallString.length; i++) {
+                    if (smallString.charAt(i) != largeString.charAt(i)) {
+                        stillMatching = false;
+                    }
+                }
+            }
+            return stilllMatching;
+        }
+       //Replace buffer on screen
+        public replaceBuffer(text)
+        {
+            //Clear characters in buffer
+            for(var i = this.buffer.length; i >0; i--)
+            {
+                var clearChar = this.buffer.charAt(this.buffer.length - 1);
+                this.buffer = this.buffer.substring(0, this.buffer.length - 1);
+                this.backSpace(clearChar);
+            }
+            //Add new characters in buffer
+            this.buffer = text;
+            for(var j = 0; j < this.buffer.length; j++)
+            {
+                this.putText(this.buffer.charAt(j));
+            }
         }
     }
  }
