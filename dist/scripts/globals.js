@@ -10,8 +10,18 @@ Operating System Concepts 8th edition by Silberschatz, Galvin, and Gagne.  ISBN 
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.
 //
 var APP_NAME = "ROBOS";
-var APP_VERSION = "0.50";
+var APP_VERSION = "1.0";
+
+//The Status
 var STATUS = "Type command: status <string> to change your status";
+
+//Status Bar variables
+var _BarCanvas = null;
+var _BarHandler = null;
+var _BarContext = null;
+
++var _ProgramInput = null;
++
 
 var CPU_CLOCK_INTERVAL = 100;
 
