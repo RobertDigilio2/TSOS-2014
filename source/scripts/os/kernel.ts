@@ -62,6 +62,9 @@ module TSOS {
             // ... Disable the Interrupts.
             this.krnTrace("Disabling the interrupts.");
             this.krnDisableInterrupts();
++            //And update status
++            _BarHandler.updateStatus("Halted");
+
             //
             // Unload the Device Drivers?
             // More?
@@ -171,6 +174,8 @@ module TSOS {
             Control.hostLog("OS ERROR - TRAP: " + msg);
             // TODO: Display error on console, perhaps in some sort of colored screen. (Perhaps blue?)
             this.krnShutdown();
++            var bsod = document.getElementById("BSOD");
++            _DrawingContext.drawImage(bsod, 0,0,500,500);
         }
     }
 }
