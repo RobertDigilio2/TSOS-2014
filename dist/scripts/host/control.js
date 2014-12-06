@@ -32,10 +32,18 @@ var TSOS;
             // Enable the added-in canvas text functions (see canvastext.ts for provenance and details).
             TSOS.CanvasTextFunctions.enable(_DrawingContext); // Text functionality is now built in to the HTML5 canvas. But this is old-school, and fun.
 
++            //enable text functions for status bar
++            _BarCanvas = document.getElementById("barCanvas");
++            _BarContext = _BarCanvas.getContext("2d");
++            _BarHandler = new TSOS.statusBarHander();
++
             // Clear the log text box.
             // Use the TypeScript cast to HTMLInputElement
             document.getElementById("taHostLog").value = "";
 
++            //Get the program input button
++            _ProgramInput = document.getElementById("ProgramInput");
++
             // Set focus on the start button.
             // Use the TypeScript cast to HTMLInputElement
             document.getElementById("btnStartOS").focus();
@@ -62,6 +70,7 @@ var TSOS;
             var taLog = document.getElementById("taHostLog");
             taLog.value = str + taLog.value;
             // Optionally update a log database or some streaming service.
+            _BarHandler.updateStatus(STATUS);
         };
 
         //
@@ -100,6 +109,8 @@ var TSOS;
             // Stop the interval that's simulating our clock pulse.
             clearInterval(_hardwareClockID);
             // TODO: Is there anything else we need to do here?
+            //Killed status
+            _BarHandler.updateStatus("Halted");
         };
 
         Control.hostBtnReset_click = function (btn) {
