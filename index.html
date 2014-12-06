@@ -5,11 +5,12 @@
    <meta name="author"             content="Alan G. Labouseur" />
    <link rel="stylesheet" href="dist/styles/tsos.css" type="text/css" media="screen" />
    <title>
-      TSOS - a browser-based virtual Operating System in TypeScript
+      ROBOS - a browser-based virtual Operating System in TypeScript
    </title>
 
    <!-- Globals CONSTANTS and _Variables. Must included be first. -->
    <script type="text/javascript" src="dist/scripts/globals.js"></script>
++   <script type="text/javascript" src="dist/scripts/os/statusBar.js"></script>
 
    <!-- Host (Hardware Simulation) Routines -->
    <script type="text/javascript" src="dist/scripts/host/control.js"></script>
@@ -84,7 +85,6 @@
                    cols="48"
          ></textarea>
       </label>
-      <script type="text/javascript" src="dist/scripts/os/statusBar.js"></script>
    </div>
 
    <div id="divUserProgramInput" style="margin-left:520px;">
@@ -98,8 +98,8 @@
          ></textarea>
       </label>
    </div>
-
-</div>
++    <canvas id="statusCanvas" width="800" height="50" style="border:1px solid #000000;">
++    </canvas>
 
 <p class="footerText" style="clear:both;">
    <br>
@@ -108,6 +108,7 @@
    Reproduction is prohibited without the express written consent of
    Ted Codd, Stevie Ray Vaughan, and Ian Fleming.
 </p>
-
++<img id ="BSOD" src="dist/images/bsod.png" height="0" width="0">
+      </div>
 </body>
 </html>
