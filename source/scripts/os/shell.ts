@@ -75,6 +75,14 @@ module TSOS {
                                   "<string> - Sets the prompt.");
             this.commandList[this.commandList.length] = sc;
             
++            //load
++            sc = new ShellCommand(this.shellLoad, "load", "<string> - Command to load program");
++            this.commandList[this.commandList.length] = sc;
+            
++            //bsod
++            sc = new ShellCommand(this.shellBSOD, "bsod", "- Causes bsod");
++            this.commandList[this.commandList.length] = sc;
+            
             //status
             sc = new ShellCommand(this.shellStatusUpdate, "status", "<string> - Sets the status");
             this.commandList[this.commandList.length] = sc;
@@ -156,7 +164,7 @@ module TSOS {
             buffer = Utils.trim(buffer);
 
             // 2. Lower-case it.
-            buffer = buffer.toLowerCase();
+            buffer = substring(0, buffer.indexOf(" ")).toLowerCase() + buffer.substring(buffer.indexOf(" ");
 
             // 3. Separate on spaces so we can determine the command and command-line args, if any.
             var tempList = buffer.split(" ");
@@ -286,22 +294,69 @@ module TSOS {
                 _StdOut.putText("Usage: prompt <string>  Please supply a string.");
             }
         }
+        //Function to load program
++        public shellLoad(args)
++        {
++            var aProgram = args;
++            var isValid = true;
++
++            for(var j = 0; j < aProgram.length; j++) 
+             {
++                var text = aProgram[j];
++                for (var i = 0; i < text.length; i++) 
+                 {
++                     var charCode = text.charCodeAt(i);
++                     var char = text[i];
++                     if ((charCode >= 48 && char <= 57) || ((charCode >= 65 && charCode <= 70) && char == char.toUpperCase()))
+                      {
++                          isValid = isValid && true;
+                      }
++                     else 
+                      {
++                          isValid = false;
++                     }
++                }
++                if(text.length > 2)
++                {
++                    isValid = false;
++                }
++            }
++
++            if(isValid)
++            {
++                _StdOut.putText("Program is valid and has loaded successfully");
++            }
++            else
++            {
++                _StdOut.putText("Program is not valid. Use only spaces, 0-9, and A-F.")
++            }
++        }
         
-        public shellStatusUpdate(args)
-        {
+        //Function to cause bsod
++        public shellBSOD() {
++            // Call Kernel trap
++            _Kernel.krnTrapError("It broke.");
+        }
+        
+        //Function to update status
+        public shellStatusUpdate(args){
             if (args.length > 0) {
-                STATUS = args[0];
++                var newStatus = args[0];
++                _BarHandler.updateStatus(newStatus);
++                _StdOut.putText("Status Updated");
             } else {
                 _StdOut.putText("Usage: status <string>  Please supply a string.");
             }
         }
         
-        public shellDateTime()
-        {
+        //Function to get Date/Time
+        public shellDateTime() {
             var d = new Date();
             d.setTime(Date.now());
             var day = d.getDay();
             var _day = "";
+            var mins = d.getMinutes();
+            var _mins = ""
                 switch(day){
                     case 0:
                         _day = "Sun.";
@@ -328,12 +383,22 @@ module TSOS {
                         "Not a valaid day."
                         break;
                 }
+                
++                if(mins < 10)
++                {
++                    _mins = "0" + mins;
++                }
++                else
++                {
++                    _mins = "" + mins;
++                }
 
             _StdOut.putText("Date: " + _day + ", " + (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear());
             _StdOut.advanceLine();
             var hours = d.getHours();
             if(hours > 12) {
-                _StdOut.putText("Time: " + (hours - 12) + ":" + d.getMinutes() + ":" + d.getSeconds() + " P.M.");
++                hours = hours - 12;
+                _StdOut.putText("Time: " + hours + ":" + _mins + ":" + d.getSeconds() + " P.M.");
             }
             else
             {
