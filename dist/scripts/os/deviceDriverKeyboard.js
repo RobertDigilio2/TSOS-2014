@@ -35,13 +35,13 @@ var TSOS;
             // Check to see if we even want to deal with the key that was pressed.
             
             //Check for backspace or tab
-+            if (keyCode == 38) {
-+                _KernelInputQueue.enqueue("up");
-+            }
-+            if (keyCode == 40) {
-+                _KernelInputQueue.enqueue("down");
-+            }
-+            if (keyCode == 8 || keyCode == 9) {
+            if (keyCode == 38) {
+                _KernelInputQueue.enqueue("up");
+            }
+            if (keyCode == 40) {
+                _KernelInputQueue.enqueue("down");
+            }
+            if (keyCode == 8 || keyCode == 9) {
                 chr = String.fromCharCode(keyCode);
                 _KernelInputQueue.enqueue(chr);
             }
