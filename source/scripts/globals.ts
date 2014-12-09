@@ -13,7 +13,7 @@
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.
 //
 var APP_NAME: string    = "ROBOS";   // 'cause Bob and I were at a loss for a better name.
-var APP_VERSION: string = "1.0";   // What did you expect?
+var APP_VERSION: string = "1.75";   // What did you expect?
 
 //The Status
 var STATUS: string = "Type command: status <string> to change your status";
@@ -23,12 +23,20 @@ var _BarCanvas: HTMLCanvasElement = null;
 var _BarHandler = null;
 var _BarContext = null;
 
-+var _ProgramInput = null;
+//Memory variables
+var _MemoryHandler = null;
+var _Memory = Array.apply(null, new Array(256)).map(String.prototype.valueOf,"00");
+var _MemoryElement = null;
+
+var _ProgramInput = null;
 
 var CPU_CLOCK_INTERVAL: number = 100;   // This is in ms, or milliseconds, so 1000 = 1 second.
+var _Processes = new Array<TSOS.PCB>();
 
-var TIMER_IRQ: number = 0;  // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
-                            // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
+var TIMER_IRQ: number = 0;
+var _SteppingMode = false;
+
+
 var KEYBOARD_IRQ: number = 1;
 
 
