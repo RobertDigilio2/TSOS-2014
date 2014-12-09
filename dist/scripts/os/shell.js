@@ -53,14 +53,22 @@ var TSOS;
             sc = new TSOS.ShellCommand(this.shellPrompt, "prompt", "<string> - Sets the prompt.");
             this.commandList[this.commandList.length] = sc;
             
-+            //load
-+            sc = new TSOS.ShellCommand(this.shellLoad, "load", "<string> - Loads the program input area value");
-+            this.commandList[this.commandList.length] = sc;
-+
-+            //bsod
-+            sc = new TSOS.ShellCommand(this.shellBSOD, "bsod", "- Causes bsod");
-+            this.commandList[this.commandList.length] = sc;
-+
+            //load
+            sc = new TSOS.ShellCommand(this.shellLoad, "load", "- Loads the program input area value");
+            this.commandList[this.commandList.length] = sc;
+            
+            //run
+            sc = new TSOS.ShellCommand(this.shellRun, "run", "<int> - Runs the process with the given pid");
+            this.commandList[this.commandList.length] = sc;
+
+            //step
+            sc = new TSOS.ShellCommand(this.shellStep, "step", "<int> -Runs the process in single step mode");
+            this.commandList[this.commandList.length] = sc;
+
+            //bsod
+            sc = new TSOS.ShellCommand(this.shellBSOD, "bsod", "- Causes bsod");
+            this.commandList[this.commandList.length] = sc;
+
             //status
             sc = new TSOS.ShellCommand(this.shellStatusUpdate, "status", "<string> - Sets the status");
             this.commandList[this.commandList.length] = sc;
@@ -279,55 +287,89 @@ var TSOS;
                 _StdOut.putText("Usage: prompt <string>  Please supply a string.");
             }
         };
-+        //Function to load program
-+        Shell.prototype.shellLoad = function (args) 
+        //Function to load program
+        Shell.prototype.shellLoad = function () 
          {
-+            var aProgram = args;
-+            var isValid = true;
-+
-+            for (var j = 0; j < aProgram.length; j++) 
+            var aProgram = _ProgramInput.value.toString().split(" ");
+            var isValid = true;
+
+            for (var j = 0; j < aProgram.length; j++) 
              {
-+                var text = aProgram[j];
-+                for (var i = 0; i < text.length; i++) 
+                var text = aProgram[j];
+                for (var i = 0; i < text.length; i++) 
                  {
-+                    var charCode = text.charCodeAt(i);
-+                    var char = text[i];
-+                    if ((charCode >= 48 && char <= 57) || ((charCode >= 65 && charCode <= 70) && char == char.toUpperCase())) 
+                    var charCode = text.charCodeAt(i);
+                    var char = text[i];
+                    if ((charCode >= 48 && char <= 57) || ((charCode >= 65 && charCode <= 70) && char == char.toUpperCase())) 
                      {
-+                        isValid = isValid && true;
-+                    } 
+                        isValid = isValid && true;
+                    } 
                      else 
                      {
-+                        isValid = false;
-+                    }
-+                }
-+                if (text.length > 2) 
+                        isValid = false;
+                    }
+                }
+                if (text.length > 2 || text.length == 0) 
                  {
-+                    isValid = false;
-+                }
-+            }
-+
-+            if (isValid) 
-             {
-+                _StdOut.putText("Program is valid and has loaded successfully");
-+            } else 
-             {
-+                _StdOut.putText("Program is not valid. Use only spaces, 0-9, and A-F.");
-+            }
-+        };
+                    isValid = false;
+                }
+            }
 
-+        //Function to cause bsod
-+        Shell.prototype.shellBSOD = function () {
-+            // Call Kernel trap
-+            _Kernel.krnTrapError("It broke.");
-+        };
+            if (isValid) 
+            {
+                _Memory = Array.apply(null, new Array(256)).map(String.prototype.valueOf, "00");
+                for (var h = 0; h < aProgram.length; h++) 
+                 {
+                    _MemoryHandler.load(aProgram[h], h);
+                    _MemoryElement.focus();
+                    _Canvas.focus();
+                }
+                var test = new TSOS.PCB();
+
+                if (_Processes.length == 0) {
+                    _Processes = _Processes.concat(test);
+                } else {
+                    _Processes[0] = test;
+                }
+                _StdOut.putText("Program is valid  and has loaded successfully. The PID is " + _Processes.length);
+            } 
+            else 
+            {
+                _StdOut.putText("Program is not valid. Use only spaces, 0-9, and A-F.");
+            }
+        };
+        
+        Shell.prototype.shellRun = function (pid) {
+            if (_Processes.length >= pid) {
+                _Processes[pid - 1].loadToCPU();
+            } else {
+                _StdOut.putText("No Programs loaded.");
+            }
+        };
+
+        Shell.prototype.shellStep = function (pid) {
+            if (_Processes.length >= pid) {
+                _Processes[pid - 1].loadToCPU;
+                _CPU.isExecuting = true;
+                _SteppingMode = true;
+                document.getElementById("btnStep").disabled = false;
+            } else {
+                _StdOut.putText("No Programs loaded.");
+            }
+        };
+
+        //Function to cause bsod
+        Shell.prototype.shellBSOD = function () {
+            // Call Kernel trap
+            _Kernel.krnTrapError("It broke.");
+        };
 
         //Function to update status
         Shell.prototype.shellStatusUpdate = function (args) {
             if (args.length > 0) {
-+                var newStatus = args[0];
-+                _BarHandler.updateStatus(newStatus);
-+                _StdOut.putText("Status Updated");
+                var newStatus = args[0];
+                _BarHandler.updateStatus(newStatus);
+                _StdOut.putText("Status Updated");
             } else {
                 _StdOut.putText("Usage: status <string>  Please supply a string.");
             }
@@ -339,8 +381,8 @@ var TSOS;
             d.setTime(Date.now());
             var day = d.getDay();
             var _day = "";
-+            var mins = d.getMinutes();
-+            var _mins = "";
+            var mins = d.getMinutes();
+            var _mins = "";
             switch (day) {
                 case 0:
                     _day = "Sun.";
@@ -368,11 +410,11 @@ var TSOS;
                     break;
            }
            
-+            if (mins < 10) {
-+                _mins = "0" + mins;
-+            } else {
-+                _mins = "" + mins;
-+            }
+            if (mins < 10) {
+                _mins = "0" + mins;
+            } else {
+                _mins = "" + mins;
+            }
 
            _StdOut.putText("Date: " + _day + ", " + (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear());
            _StdOut.advanceLine();
