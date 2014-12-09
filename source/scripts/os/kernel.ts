@@ -62,8 +62,8 @@ module TSOS {
             // ... Disable the Interrupts.
             this.krnTrace("Disabling the interrupts.");
             this.krnDisableInterrupts();
-+            //And update status
-+            _BarHandler.updateStatus("Halted");
+            //And update status
+            _BarHandler.updateStatus("Halted");
 
             //
             // Unload the Device Drivers?
@@ -85,7 +85,7 @@ module TSOS {
                 // TODO: Implement a priority queue based on the IRQ number/id to enforce interrupt priority.
                 var interrupt = _KernelInterruptQueue.dequeue();
                 this.krnInterruptHandler(interrupt.irq, interrupt.params);
-            } else if (_CPU.isExecuting) { // If there are no interrupts then run one CPU cycle if there is anything being processed. {
+            } else if (_CPU.isExecuting && !_SteppingMode) { // If there are no interrupts then run one CPU cycle if there is anything being processed. {
                 _CPU.cycle();
             } else {                      // If there are no interrupts and there is nothing being executed then just be idle. {
                 this.krnTrace("Idle");
@@ -174,8 +174,8 @@ module TSOS {
             Control.hostLog("OS ERROR - TRAP: " + msg);
             // TODO: Display error on console, perhaps in some sort of colored screen. (Perhaps blue?)
             this.krnShutdown();
-+            var bsod = document.getElementById("BSOD");
-+            _DrawingContext.drawImage(bsod, 0,0,500,500);
+            var bsod = document.getElementById("BSOD");
+            _DrawingContext.drawImage(bsod, 0,0,500,500);
         }
     }
 }
