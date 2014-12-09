@@ -75,13 +75,20 @@ module TSOS {
                                   "<string> - Sets the prompt.");
             this.commandList[this.commandList.length] = sc;
             
-+            //load
-+            sc = new ShellCommand(this.shellLoad, "load", "<string> - Command to load program");
-+            this.commandList[this.commandList.length] = sc;
+            //load
+            sc = new ShellCommand(this.shellLoad, "load", "- Command to load program");
+            this.commandList[this.commandList.length] = sc;
             
-+            //bsod
-+            sc = new ShellCommand(this.shellBSOD, "bsod", "- Causes bsod");
-+            this.commandList[this.commandList.length] = sc;
+            //run
+            sc = new ShellCommand(this.shellRun, "run","<int> - Runs the process with the given pid");
+            this.commandList[this.commandList.length] = sc;
+            //step
+            sc = new ShellCommand(this.shellStep, "step","<int> -Runs the process in single step mode")
+            this.commandList[this.commandList.length] = sc;
+            
+            //bsod
+            sc = new ShellCommand(this.shellBSOD, "bsod", "- Causes bsod");
+            this.commandList[this.commandList.length] = sc;
             
             //status
             sc = new ShellCommand(this.shellStatusUpdate, "status", "<string> - Sets the status");
@@ -295,55 +302,100 @@ module TSOS {
             }
         }
         //Function to load program
-+        public shellLoad(args)
-+        {
-+            var aProgram = args;
-+            var isValid = true;
-+
-+            for(var j = 0; j < aProgram.length; j++) 
+        public shellLoad()
+        {
+            var aProgram = _ProgramInput.value.toString().split(" ");
+            var isValid = true;
+
+            for(var j = 0; j < aProgram.length; j++) 
              {
-+                var text = aProgram[j];
-+                for (var i = 0; i < text.length; i++) 
+                var text = aProgram[j];
+                for (var i = 0; i < text.length; i++) 
                  {
-+                     var charCode = text.charCodeAt(i);
-+                     var char = text[i];
-+                     if ((charCode >= 48 && char <= 57) || ((charCode >= 65 && charCode <= 70) && char == char.toUpperCase()))
+                     var charCode = text.charCodeAt(i);
+                     var char = text[i];
+                     if ((charCode >= 48 && char <= 57) || ((charCode >= 65 && charCode <= 70) && char == char.toUpperCase()))
                       {
-+                          isValid = isValid && true;
+                          isValid = isValid && true;
                       }
-+                     else 
+                     else 
                       {
-+                          isValid = false;
-+                     }
-+                }
-+                if(text.length > 2)
-+                {
-+                    isValid = false;
-+                }
-+            }
-+
-+            if(isValid)
-+            {
-+                _StdOut.putText("Program is valid and has loaded successfully");
-+            }
-+            else
-+            {
-+                _StdOut.putText("Program is not valid. Use only spaces, 0-9, and A-F.")
-+            }
-+        }
+                          isValid = false;
+                     }
+                }
++                if(text.length > 2 || text.length == 0)
+                {
+                    isValid = false;
+                }
+            }
+
+            if(isValid)
+            {
+                _Memory = Array.apply(null, new Array(256)).map(String.prototype.valueOf,"00");
+                for(var h = 0; h < aProgram.length; h++)
+                {
+                    _MemoryHandler.load(aProgram[h], h);
+                    _MemoryElement.focus();
+                    _Canvas.focus();
+                }
+                var test = new PCB();
+                if(_Processes.length == 0)
+                {
+                    _Processes = _Processes.concat(test);
+                }
+                else
+                {
+                    _Processes[0] = test;
+                }
+                _StdOut.putText("Program is valid and has loaded successfully. The PID is " + _Processes.length);
+            }
+            else
+            {
+                _StdOut.putText("Program is not valid. Use only spaces, 0-9, and A-F.")
+            }
+        }
+        
+        //Function to run a program
+        public shellRun(pid)
+        {
+            if(_Processes.length >= pid)
+            {
+                _Processes[pid - 1].loadToCPU();
+            }
+           else
+            {
+                _StdOut.putText("No Programs loaded.");
+            }
+        }
+
+        //Function to step through a program
+        public shellStep(pid)
+        {
+            if(_Processes.length >= pid)
+            {
+                _Processes[pid - 1].loadToCPU;
+                _CPU.isExecuting = true;
+                _SteppingMode = true;
+                document.getElementById("btnStep").disabled = false;
+            }
+            else
+            {
+                _StdOut.putText("No Programs loaded.");
+            }
+        }
         
         //Function to cause bsod
-+        public shellBSOD() {
-+            // Call Kernel trap
-+            _Kernel.krnTrapError("It broke.");
+        public shellBSOD() {
+            // Call Kernel trap
+            _Kernel.krnTrapError("It broke.");
         }
         
         //Function to update status
         public shellStatusUpdate(args){
             if (args.length > 0) {
-+                var newStatus = args[0];
-+                _BarHandler.updateStatus(newStatus);
-+                _StdOut.putText("Status Updated");
+                var newStatus = args[0];
+                _BarHandler.updateStatus(newStatus);
+                _StdOut.putText("Status Updated");
             } else {
                 _StdOut.putText("Usage: status <string>  Please supply a string.");
             }
@@ -384,20 +436,20 @@ module TSOS {
                         break;
                 }
                 
-+                if(mins < 10)
-+                {
-+                    _mins = "0" + mins;
-+                }
-+                else
-+                {
-+                    _mins = "" + mins;
-+                }
+                if(mins < 10)
+                {
+                    _mins = "0" + mins;
+                }
+                else
+                {
+                    _mins = "" + mins;
+                }
 
             _StdOut.putText("Date: " + _day + ", " + (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear());
             _StdOut.advanceLine();
             var hours = d.getHours();
             if(hours > 12) {
-+                hours = hours - 12;
+                hours = hours - 12;
                 _StdOut.putText("Time: " + hours + ":" + _mins + ":" + d.getSeconds() + " P.M.");
             }
             else
