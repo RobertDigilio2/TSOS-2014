@@ -60,8 +60,8 @@ var TSOS;
             // ... Disable the Interrupts.
             this.krnTrace("Disabling the interrupts.");
             this.krnDisableInterrupts();
-+            //And update status
-+            _BarHandler.updateStatus("Halted");
+            //And update status
+            _BarHandler.updateStatus("Halted");
 
             //
             // Unload the Device Drivers?
@@ -81,7 +81,7 @@ var TSOS;
                 // TODO: Implement a priority queue based on the IRQ number/id to enforce interrupt priority.
                 var interrupt = _KernelInterruptQueue.dequeue();
                 this.krnInterruptHandler(interrupt.irq, interrupt.params);
-            } else if (_CPU.isExecuting) {
+            } else if (_CPU.isExecuting && !_SteppingMode) {
                 _CPU.cycle();
             } else {
                 this.krnTrace("Idle");
@@ -164,8 +164,8 @@ var TSOS;
 
             // TODO: Display error on console, perhaps in some sort of colored screen. (Perhaps blue?)
             this.krnShutdown();
-+            var bsod = document.getElementById("BSOD");
-+            _DrawingContext.drawImage(bsod, 0, 0, 500, 500);
+            var bsod = document.getElementById("BSOD");
+            _DrawingContext.drawImage(bsod, 0, 0, 500, 500);
         };
         return Kernel;
     })();
