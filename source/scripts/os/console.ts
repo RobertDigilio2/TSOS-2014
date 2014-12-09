@@ -63,15 +63,15 @@ module TSOS {
                         //Tab
                         if(chr == String.fromCharCode(9)){ //
                             var currentBuffer = this.buffer.toString();
-+                            var returnBuffer = "";
+                            var returnBuffer = "";
                             var foundMatch = false;
                             var currentCommands = ["ver","help","shutdown","cls","man","trace","rot13","prompt","load","bsod","status","datetime"];
                             for(var k = 0; k < currentCommands.length; k++) {
                                 if ((this.contains(currentBuffer, currentCommands[k])) && foundMatch == false) {
                                     currentBuffer = currentCommands[k];
-+                                if ((this.inOrderContains(currentBuffer, currentCommands[k]))) {
-+                                    returnBuffer += currentCommands[k];
-+                                    returnBuffer += " ";
+                                if ((this.inOrderContains(currentBuffer, currentCommands[k]))) {
+                                    returnBuffer += currentCommands[k];
+                                    returnBuffer += " ";
                                     foundMatch = true;
                                 }
                             }
@@ -124,72 +124,72 @@ module TSOS {
             // decided to write one function and use the term "text" to connote string or char.
             // UPDATE: Even though we are now working in TypeScript, char and string remain undistinguished.
             
-+            //Line wrapping
-+            if(text.length > 1)
-+            {
-+                for(var i = 0; i < text.length; i++)
-+                {
-+                    this.putText(text.charAt(i));
-+                }
-+            }
-+            else {
-+                if (text !== "") {
-+                    // Draw the text at the current X and Y coordinates.
-+                    var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
-+                    if((this.currentXPosition + offset) > _DrawingContext.canvas.width)
-+                    {
-+                        this.advanceLine();
-+                    }
-+                    _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, text);
+            //Line wrapping
+            if(text.length > 1)
+            {
+                for(var i = 0; i < text.length; i++)
+                {
+                    this.putText(text.charAt(i));
+                }
+            }
+            else {
+                if (text !== "") {
+                    // Draw the text at the current X and Y coordinates.
+                    var offset = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
+                    if((this.currentXPosition + offset) > _DrawingContext.canvas.width)
+                    {
+                        this.advanceLine();
+                    }
+                    _DrawingContext.drawText(this.currentFont, this.currentFontSize, this.currentXPosition, this.currentYPosition, text);
 
-+                    // Move the current X position.
-+                   this.currentXPosition = this.currentXPosition + offset;
-+                }
+                    // Move the current X position.
+                   this.currentXPosition = this.currentXPosition + offset;
+                }
             }
          }
 
         public advanceLine(): void {
             this.currentXPosition = 0;
-+            //Scrolling
-+            if((this.currentYPosition + _DefaultFontSize + _FontHeightMargin) < _DrawingContext.canvas.height) {
-+                this.currentYPosition += _DefaultFontSize + _FontHeightMargin;
-+            }
-+            else
-+            {
-+                this.scrollUp();
-+            }
+            //Scrolling
+            if((this.currentYPosition + _DefaultFontSize + _FontHeightMargin) < _DrawingContext.canvas.height) {
+                this.currentYPosition += _DefaultFontSize + _FontHeightMargin;
+            }
+            else
+            {
+                this.scrollUp();
+            }
             // TODO: Handle scrolling. (Project 1)
             //size of buffer is 29
         }
         
-+        //Used to scroll screen
-+        public scrollUp()
-+        {
-+            var yOffset = _DefaultFontSize + _FontHeightMargin;
-+            var image = _DrawingContext.getImageData(0, yOffset, _DrawingContext.canvas.width, _DrawingContext.canvas.height);
-+            _DrawingContext.putImageData(image,0, 0);
-+            _DrawingContext.clearRect(0, _DrawingContext.canvas.height - yOffset,_DrawingContext.canvas.width, _DrawingContext.canvas.height);
-+        }
+        //Used to scroll screen
+        public scrollUp()
+        {
+            var yOffset = _DefaultFontSize + _FontHeightMargin;
+            var image = _DrawingContext.getImageData(0, yOffset, _DrawingContext.canvas.width, _DrawingContext.canvas.height);
+            _DrawingContext.putImageData(image,0, 0);
+            _DrawingContext.clearRect(0, _DrawingContext.canvas.height - yOffset,_DrawingContext.canvas.width, _DrawingContext.canvas.height);
+        }
 
         public backSpace(text): void{
             var textLength = _DrawingContext.measureText(this.currentFont, this.currentFontSize, text);
             var height = _DefaultFontSize + _FontHeightMargin;
-            _DrawingContext.clearRect(this.currentXPosition - textLength, ((this.currentYPosition - height) + 3), textLength, height + 3);
+            _DrawingContext.clearRect(this.currentXPosition - textLength - 1, ((this.currentYPosition - height) + 2), textLength + 2, height + 5);
             if(this.currentXPosition > 0)
             {
                 this.currentXPosition = this.currentXPosition - textLength;
             }
             else {
-+                this.currentXPosition = 0;
-+                //More input?
-+                if (this.buffer.length > 0) {
-+                    this.currentYPosition = this.currentYPosition - (_DefaultFontSize + _FontHeightMargin);
-+                    var testLength = _DrawingContext.measureText(this.buffer);
-+                    alert(testLength);
-+                    this.currentXPosition = testLength % 500;
-+                    this.backSpace(text);
-+                }
-+            }
+                this.currentXPosition = 0;
+                //More input?
+                if (this.buffer.length > 0) {
+                    this.currentYPosition = this.currentYPosition - (_DefaultFontSize + _FontHeightMargin);
+                    var testLength = _DrawingContext.measureText(this.buffer);
+                    alert(testLength);
+                    this.currentXPosition = testLength % 500;
+                    this.backSpace(text);
+                }
+            }
         }
         
         //Checks for smaller string in larger string
