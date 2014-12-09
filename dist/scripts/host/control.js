@@ -32,18 +32,22 @@ var TSOS;
             // Enable the added-in canvas text functions (see canvastext.ts for provenance and details).
             TSOS.CanvasTextFunctions.enable(_DrawingContext); // Text functionality is now built in to the HTML5 canvas. But this is old-school, and fun.
 
-+            //enable text functions for status bar
-+            _BarCanvas = document.getElementById("barCanvas");
-+            _BarContext = _BarCanvas.getContext("2d");
-+            _BarHandler = new TSOS.statusBarHander();
-+
+            //enable text functions for status bar
+            _BarCanvas = document.getElementById("barCanvas");
+            _BarContext = _BarCanvas.getContext("2d");
+            _BarHandler = new TSOS.statusBarHander();
+            
+            //create memory
+            _MemoryHandler = new TSOS.memory();
+            _MemoryElement = document.getElementById("memory");
+
             // Clear the log text box.
             // Use the TypeScript cast to HTMLInputElement
             document.getElementById("taHostLog").value = "";
 
-+            //Get the program input button
-+            _ProgramInput = document.getElementById("ProgramInput");
-+
+            //Get the program input button
+            _ProgramInput = document.getElementById("ProgramInput");
+
             // Set focus on the start button.
             // Use the TypeScript cast to HTMLInputElement
             document.getElementById("btnStartOS").focus();
@@ -97,6 +101,16 @@ var TSOS;
             // .. and call the OS Kernel Bootstrap routine.
             _Kernel = new TSOS.Kernel();
             _Kernel.krnBootstrap();
+            
+            //update memory
+            _MemoryHandler.updateMem();
+        };
+        
+        Control.hostBtnStep_click = function (btn) {
+            //for single step execution of processes
+            if (_CPU.isExecuting && _SteppingMode == true) {
+                _CPU.cycle();
+            }
         };
 
         Control.hostBtnHaltOS_click = function (btn) {
