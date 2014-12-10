@@ -27,18 +27,25 @@ var TSOS;
             }
         };
 
+        //Read a value from memory at given index
         memory.prototype.read = function (index) {
             return _Memory[index];
         };
 
+        //Updates visual memory
         memory.prototype.updateMem = function () {
             _MemoryElement.value = "";
             for (var i = 0; i < _Memory.length; i++) {
                 _MemoryElement.value = _MemoryElement.value + _Memory[i] + " ";
             }
-            _CPU.updateConsole();
+            _CPU.updateUI();
+            if (_currentProcess > 0 && _Processes[_currentProcess - 1] != null) {
+                _MemoryElement.value = _MemoryElement.value + "\n PCB. PID:" + _currentProcess + "\n";
+                _Processes[_currentProcess - 1].printToScreen();
+            }
         };
         
+       //Converts hex digit to string
         memory.prototype.ConvertToString = function (digit) {
             switch (digit) {
                 case 10: {
