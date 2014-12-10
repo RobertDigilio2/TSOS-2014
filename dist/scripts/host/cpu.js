@@ -40,16 +40,10 @@ var TSOS;
             _Kernel.krnTrace('CPU cycle');
             this.handleCommand(_MemoryHandler.read(this.PC));
         };
-
-        Cpu.prototype.load = function (PC, Acc, Xreg, Yreg, Zflag) {
-            this.PC = PC;
-            this.Acc = Acc;
-            this.Xreg = Yreg;
-            this.Zflag = Zflag;
-        };
-
-        Cpu.prototype.updateConsole = function () {
-            _MemoryElement.value += "\n \n";
+        
+       //Updates UI
+       Cpu.prototype.updateUI = function () {
+            _MemoryElement.value += "\n \n CPU \n";
             _MemoryElement.value += "PC: " + this.PC + "\n";
             _MemoryElement.value += "Acc: " + this.Acc + "\n";
             _MemoryElement.value += "Xreg: " + this.Xreg + "\n";
@@ -57,6 +51,21 @@ var TSOS;
             _MemoryElement.value += "Zflag: " + this.Zflag + "\n";
         };
 
+       //Loads CPU with specified values
+        Cpu.prototype.load = function (PC, Acc, Xreg, Yreg, Zflag) {
+            this.PC = PC;
+            this.Acc = Acc;
+            this.Xreg = Xreg;
+            this.Yreg = Yreg;
+            this.Zflag = Zflag;
+        };
+
+        //Stores current CPU values to PID
+        Cpu.prototype.storeInPCB = function (PID) {
+            _Processes[PID - 1].storeVals(this.PC, this.Acc, this.Xreg, this.Yreg, this.Zflag);
+        };
+
+        //Handles disassembly command
         Cpu.prototype.handleCommand = function (command) {
             switch (command) {
                 case "AC": {
@@ -110,7 +119,14 @@ var TSOS;
                 case "D0": {
                     //BEQ if z flag is not set, branch
                     if (this.Zflag == 0) {
-                        this.PC = this.PC - (255 - parseInt("0x" + _MemoryHandler.read(this.PC + 1))) + 1;
+                        var offset = parseInt("0x" + _MemoryHandler.read(this.PC + 1));
+                        this.PC = this.PC + offset;
+                        if (this.PC > 255) {
+                            this.PC = this.PC - 255;
+                        } else {
+                            this.PC = this.PC + 1;
+                        }
+                        this.PC = this.PC + 1;
                     } else {
                         this.PC = this.PC + 2;
                     }
@@ -127,10 +143,12 @@ var TSOS;
                     //First get memory variable
                     var oldPC = this.PC;
                     this.PC = parseInt("0x" + _MemoryHandler.read(this.PC + 2) + _MemoryHandler.read(this.PC + 1));
-
                     var temp = parseInt("0x" + _MemoryHandler.read(this.PC));
+                    
                     if (temp == this.Xreg) {
                         this.Zflag = 1;
+                    } else {
+                        this.Zflag = 0;
                     }
                     this.PC = oldPC + 3;
                     _MemoryHandler.updateMem();
@@ -151,7 +169,6 @@ var TSOS;
                 case "FF": {
                     //System Call, check the Xreg
                     if (this.Xreg == 2) {
-                        _StdOut.advanceLine();
                         //Print the yreg to the screen
                         var i = 0;
                         while (_MemoryHandler.read(this.Yreg + i) != "00" && i < 256) {
@@ -162,17 +179,19 @@ var TSOS;
                         }
                     }
                     if (this.Xreg == 1) {
-                        _StdOut.advanceLine();
-                        _StdOut.putText(" " + this.Yreg);
+                        _StdOut.putText("" + this.Yreg);
                     }
                     _MemoryHandler.updateMem();
+                    this.PC += 1;
                     break;
                 }
                 case "00": {
                     //Break
                     this.isExecuting = false;
+                    _CPU.storeInPCB(_currentProcess);
                     _MemoryHandler.updateMem();
                     document.getElementById("btnStep").disabled = true;
+                    _currentProcess = 0;
                     break;
                 }
                 case "6D": {
