@@ -328,10 +328,14 @@ var TSOS;
 
                 if (_Processes.length == 0) {
                     _Processes = _Processes.concat(test);
+                    _currentProcess = 1;
                 } else {
                     _Processes[0] = test;
+                    _currentProcess = 1;
                 }
-                _StdOut.putText("Program is valid  and has loaded successfully. The PID is " + _Processes.length);
+                _Processes[0].loadToCPU();
+                _StdOut.putText("Program is valid and has loaded successfully. The PID is " + _Processes.length);
+                _MemoryHandler.updateMem();
             } 
             else 
             {
@@ -342,6 +346,8 @@ var TSOS;
         Shell.prototype.shellRun = function (pid) {
             if (_Processes.length >= pid) {
                 _Processes[pid - 1].loadToCPU();
+                _currentProcess = pid;
+                _CPU.isExecuting = true;
             } else {
                 _StdOut.putText("No Programs loaded.");
             }
@@ -353,6 +359,7 @@ var TSOS;
                 _CPU.isExecuting = true;
                 _SteppingMode = true;
                 document.getElementById("btnStep").disabled = false;
+                _currentProcess = pid;
             } else {
                 _StdOut.putText("No Programs loaded.");
             }
