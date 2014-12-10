@@ -33,12 +33,14 @@ module TSOS {
             }
 
         }
-        //Read hex from memory
+        
+        //Read a value from memory at given index
         public read(index)
         {
             return _Memory[index];
         }
 
+        //Updates visual memory
         public updateMem()
         {
             _MemoryElement.value = "";
@@ -46,9 +48,16 @@ module TSOS {
             {
                 _MemoryElement.value = _MemoryElement.value + _Memory[i] + " ";
             }
-            _CPU.updateConsole();
+            _CPU.updateUI();
+            if(_currentProcess > 0 && _Processes[_currentProcess - 1] != null)
+            {
+                _MemoryElement.value = _MemoryElement.value + "\n PCB. PID:" + _currentProcess + "\n";
+                _Processes[_currentProcess - 1].printToScreen();
+
+            }
         }
 
+        //Converts hex digit to string
         public ConvertToString(digit)
         {
             switch(digit)
