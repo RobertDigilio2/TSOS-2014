@@ -323,7 +323,7 @@ module TSOS {
                           isValid = false;
                      }
                 }
-+                if(text.length > 2 || text.length == 0)
+                if(text.length > 2 || text.length == 0)
                 {
                     isValid = false;
                 }
@@ -342,12 +342,16 @@ module TSOS {
                 if(_Processes.length == 0)
                 {
                     _Processes = _Processes.concat(test);
+                    _currentProcess = 1;
                 }
                 else
                 {
                     _Processes[0] = test;
+                    _currentProcess = 1;
                 }
+                _Processes[0].loadToCPU();
                 _StdOut.putText("Program is valid and has loaded successfully. The PID is " + _Processes.length);
+                _MemoryHandler.updateMem();
             }
             else
             {
@@ -361,6 +365,7 @@ module TSOS {
             if(_Processes.length >= pid)
             {
                 _Processes[pid - 1].loadToCPU();
+                _currentProcess = pid;
             }
            else
             {
@@ -377,6 +382,8 @@ module TSOS {
                 _CPU.isExecuting = true;
                 _SteppingMode = true;
                 document.getElementById("btnStep").disabled = false;
+                _currentProcess = pid;
+                _CPU.isExecuting = true;
             }
             else
             {
