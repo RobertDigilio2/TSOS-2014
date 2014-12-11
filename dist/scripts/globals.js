@@ -10,7 +10,7 @@ Operating System Concepts 8th edition by Silberschatz, Galvin, and Gagne.  ISBN 
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.
 //
 var APP_NAME = "ROBOS";
-var APP_VERSION = "2.0";
+var APP_VERSION = "2.25";
 
 //The Status
 var STATUS = "Type command: status <string> to change your status";
@@ -22,7 +22,7 @@ var _BarContext = null;
 
 //Memory variables
 var _MemoryHandler = null;
-var _Memory = Array.apply(null, new Array(256)).map(String.prototype.valueOf, "00");
+var _Memory = Array.apply(null, new Array(768)).map(String.prototype.valueOf, "00");
 var _MemoryElement = null;
 
 var _ProgramInput = null;
@@ -30,6 +30,9 @@ var _ProgramInput = null;
 var CPU_CLOCK_INTERVAL = 100;
 var _Processes = new Array();
 var _currentProcess = 0;
+var _savePID = 1;
+
+var _ReadyQueue = null;
 
 var TIMER_IRQ = 0;
 var _SteppingMode = false;
