@@ -8,6 +8,7 @@ var TSOS;
             this.Xreg = 0;
             this.Yreg = 0;
             this.Zflag = 0;
+            this.PID = 0;
         }
 
         PCB.prototype.PCB = function (PC, Acc, Xreg, Yreg, Zflag) {
@@ -22,7 +23,7 @@ var TSOS;
             this.Yreg = Yreg;
             this.Zflag = Zflag;
         };
-        
+
         //Loads values of PCB to CPU
         PCB.prototype.loadToCPU = function () {
             _CPU.load(this.PC, this.Acc, this.Xreg, this.Yreg, this.Zflag);
@@ -36,14 +37,23 @@ var TSOS;
             this.Yreg = Yreg;
             this.Zflag = Zflag;
         };
+        
+        PCB.prototype.setPID = function (val) {
+            this.PID = val;
+        };
+
+        PCB.prototype.setPCval = function (val) {
+            this.PC = val;
+        };
 
         PCB.prototype.printToScreen = function () {
             _MemoryElement.value += "\n";
-            _MemoryElement.value += "PC: " + this.PC + "\n";
-            _MemoryElement.value += "Acc: " + this.Acc + "\n";
-            _MemoryElement.value += "Xreg: " + this.Xreg + "\n";
-            _MemoryElement.value += "Yreg: " + this.Yreg + "\n";
-            _MemoryElement.value += "Zflag: " + this.Zflag + "\n";
+            _MemoryElement.value += "PC: " + this.PC + "|";
+            _MemoryElement.value += "Acc: " + this.Acc + "|";
+            _MemoryElement.value += "Xreg: " + this.Xreg + "|";
+            _MemoryElement.value += "Yreg: " + this.Yreg + "|";
+            _MemoryElement.value += "Zflag: " + this.Zflag + "|";
+            _MemoryElement.value += "PCBID: " + this.PID;
         };
         return PCB;
     })();
