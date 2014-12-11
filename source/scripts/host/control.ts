@@ -107,6 +107,7 @@ module TSOS {
             
             //update memory
             _MemoryHandler.updateMem();
+            _ReadyQueue = new TSOS.Queue();
         }
         
         public static hostBtnStep_click(btn): void
