@@ -104,6 +104,7 @@ var TSOS;
             
             //update memory
             _MemoryHandler.updateMem();
+            _ReadyQueue = new TSOS.Queue();
         };
         
         Control.hostBtnStep_click = function (btn) {
