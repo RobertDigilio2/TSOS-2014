@@ -121,7 +121,7 @@ var TSOS;
                     if (this.Zflag == 0) {
                         var offset = parseInt("0x" + _MemoryHandler.read(this.PC + 1));
                         this.PC = this.PC + offset;
-                        if (this.PC > 255) {
+                        if (this.PC >  + ((_currentProcess - 1) * 256)) {
                             this.PC = this.PC - 255;
                         } else {
                             this.PC = this.PC + 1;
