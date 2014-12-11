@@ -86,6 +86,10 @@ module TSOS {
             sc = new ShellCommand(this.shellStep, "step","<int> -Runs the process in single step mode")
             this.commandList[this.commandList.length] = sc;
             
+            //flush memory
+            sc = new ShellCommand(this.shellClearMem, "flushmem", "-Flushes contents in memory");
+            this.commandList[this.commandList.length] = sc;
+            
             //bsod
             sc = new ShellCommand(this.shellBSOD, "bsod", "- Causes bsod");
             this.commandList[this.commandList.length] = sc;
@@ -305,6 +309,7 @@ module TSOS {
         public shellLoad()
         {
             var aProgram = _ProgramInput.value.toString().split(" ");
+            var errorFlag = 0;
             var isValid = true;
 
             for(var j = 0; j < aProgram.length; j++) 
@@ -329,33 +334,73 @@ module TSOS {
                 }
             }
 
-            if(isValid)
-            {
-                _Memory = Array.apply(null, new Array(256)).map(String.prototype.valueOf,"00");
-                for(var h = 0; h < aProgram.length; h++)
-                {
-                    _MemoryHandler.load(aProgram[h], h);
-                    _MemoryElement.focus();
-                    _Canvas.focus();
-                }
-                var test = new PCB();
-                if(_Processes.length == 0)
-                {
-                    _Processes = _Processes.concat(test);
-                    _currentProcess = 1;
-                }
-                else
-                {
-                    _Processes[0] = test;
-                    _currentProcess = 1;
-                }
-                _Processes[0].loadToCPU();
-                _StdOut.putText("Program is valid and has loaded successfully. The PID is " + _Processes.length);
-                _MemoryHandler.updateMem();
+            if(isValid) 
+             {
+                //check the ready queue
+                var readyFlag = false;
+                if(!_ReadyQueue.isEmpty()) {
+                    for (var k = 0; k < _ReadyQueue.getSize(); j++) {
+                        var targetProcess = _ReadyQueue.dequeue();
+                        var targetPID = targetProcess.getPID();
+                        if (_savePID == targetPID) {
+                            readyFlag = true;
+                        }
+                        _ReadyQueue.enqueue(targetProcess);
+                    }
+                 }
+                if (_savePID == _currentProcess || readyFlag == true) {
+                    errorFlag = 2;
+                 }
+                else {
+                    var test = new PCB();
+                    test.setPID(_savePID);
+                    test.setPCval(256 * (_savePID - 1))
+                    if (_savePID == 3) {
+                        _savePID = 1;
+                    }
+                    else {
+                        _savePID = _savePID + 1;
+                    }
+                    //Handle multiple Processes
+                    if (_Processes.length < 3) {
+
+                        _Processes = _Processes.concat(test);
+                        _currentProcess = test.PID;
+                    }
+                    else {
+                        _Processes[test.PID] = test;
+                        _currentProcess = test.PID;
+                    }
+                    var offset = 256 * (_Processes.length - 1);
+                    for (var h = 0; h < aProgram.length; h++) {
+                        _MemoryHandler.load(aProgram[h], h + offset);
+                        _MemoryElement.focus();
+                        _Canvas.focus();
+                    }
+
+                    _StdOut.putText("Program is valid and has loaded successfully. The PID is = " + test.PID);
+                    _MemoryHandler.updateMem();
+                 }
             }
             else
             {
-                _StdOut.putText("Program is not valid. Use only spaces, 0-9, and A-F.")
+                errorFlag = 1;
+
+            }
+            switch(errorFlag)
+            {
+                case 0:
+                {
+                    break;
+                }
+                case 1:
+                {
+                    _StdOut.putText("Program is not valid. Use only spaces, 0-9, and A-F.");
+                    break;
+                }
+                case 2:
+                    _StdOut.putText("Program not loaded due to target being either on the ready queue or currently in the CPU.");
+                    break;
             }
         }
         
@@ -389,6 +434,18 @@ module TSOS {
             {
                 _StdOut.putText("No Programs loaded.");
             }
+        }
+        
+        //Function to flsuh memory
+        public shellClearMem()
+        {
+            for(var i = 0; i < _Memory.length; i++)
+            {
+                _MemoryHandler.load("00",i);
+            }
+            _currentProcess = 0;
+            _Processes = new Array<TSOS.PCB>();
+            _StdOut.putText("Memory flushed");
         }
         
         //Function to cause bsod
