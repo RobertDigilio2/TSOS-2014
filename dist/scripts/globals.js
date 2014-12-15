@@ -33,6 +33,7 @@ var _currentProcess = 0;
 var _savePID = 1;
 
 var _ReadyQueue = null;
+var _quantum = 6;
 
 var TIMER_IRQ = 0;
 var _SteppingMode = false;
