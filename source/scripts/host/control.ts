@@ -106,8 +106,8 @@ module TSOS {
             _Kernel.krnBootstrap();
             
             //update memory
+            _ReadyQueue = new Queue();
             _MemoryHandler.updateMem();
-            _ReadyQueue = new TSOS.Queue();
         }
         
         public static hostBtnStep_click(btn): void
