@@ -25,6 +25,9 @@ module TSOS {
                     public Xreg: number = 0,
                     public Yreg: number = 0,
                     public Zflag: number = 0,
+                    public runningCycleCount = 0,
+                    public base: number = 0,
+                    public limit: number = 0,
                     public isExecuting: boolean = false) 
         {
 
@@ -43,7 +46,38 @@ module TSOS {
         public cycle(): void 
         {
             _Kernel.krnTrace('CPU cycle');
-            this.handleCommand(_MemoryHandler.read(this.PC));
+            //context swap
+            if((this.runningCycleCount % _quantum) == 0 && _ReadyQueue.getSize() > 0 && this.runningCycleCount > 0)
+            {
+                if(_currentProcess == 0)
+                {
+                    _Kernel.krnTrace('Completed Program ' + _currentProcess);
+                    var process = _ReadyQueue.dequeue();
+                    process.loadToCPU();
+                    _currentProcess = process.PID;
+                    _Kernel.krnTrace('Loading Program ' + _currentProcess);
+                    this.runningCycleCount = 0;
+                }
+                else
+                {
+                    _Kernel.krnTrace('Context Swap from ' + _currentProcess);
+                    this.contextSwitch();
+                    this.runningCycleCount = 0;
+                }
+            }
+            else {
+                if (_currentProcess == 0 && _ReadyQueue.getSize() == 0)
+                {
+                    _Kernel.krnTrace('Completed all execution');
+                    this.isExecuting = false;
+                }
+                else
+                {
+                    _Kernel.krnTrace('CPU cycle');
+                    this.handleCommand(_MemoryHandler.read(this.PC));
+                    this.runningCycleCount = this.runningCycleCount + 1;
+                }
+            }
         }
 
         //Updates UI
@@ -58,19 +92,35 @@ module TSOS {
         }
         
         //Loads CPU with specific values
-        public load(PC, Acc, Xreg, Yreg, Zflag)
+        public load(PC, Acc, Xreg, Yreg, Zflag, base, limit)
         {
             this.PC = PC;
             this.Acc = Acc;
             this.Xreg = Xreg;
             this.Yreg = Yreg;
             this.Zflag = Zflag;
+            this.base = base;
+            this.limit = limit;
         }
 
         //Stores current CPU values to PID
         public storeInPCB(PID)
         {
             _Processes[PID - 1].storeVals(this.PC, this.Acc, this.Xreg, this.Yreg, this.Zflag);
+        }
+
+        public contextSwitch()
+        {
+            this.storeInPCB(_currentProcess);
+            _ReadyQueue.enqueue(_Processes[_currentProcess - 1]);
+            var nextProcess = _ReadyQueue.dequeue();
+            nextProcess.loadToCPU();
+            _currentProcess = nextProcess.PID;
+        }
+
+        public checkbounds(memLoc)
+        {
+            return memLoc >= this.base && memLoc <= this.limit;
         }
 
         //Handles disassembly command
@@ -82,9 +132,20 @@ module TSOS {
                     //Load y register from memory
                     var oldPC = this.PC;
                     this.PC = parseInt("0x" + _MemoryHandler.read(this.PC + 2) + _MemoryHandler.read(this.PC + 1));
-                    this.Yreg = parseInt("0x" + _MemoryHandler.read(this.PC));
-                    this.PC = oldPC + 3;
-                    _MemoryHandler.updateMem();
+                    if(this.checkbounds(this.PC))
+                    {
+                        this.Yreg = parseInt("0x" + _MemoryHandler.read(this.PC));
+                        this.PC = oldPC + 3;
+                        _MemoryHandler.updateMem();
+                    }
+                    else
+                    {
+                        this.PC = oldPC;
+                        _StdOut.putText("Index out of bounds error on process " + _currentProcess);
+                        this.storeInPCB(_currentProcess);
+                        _currentProcess = 0;
+
+                    }
                     break;
                 }
                 case "AD":
@@ -92,9 +153,20 @@ module TSOS {
                     //Load from memory
                     var oldPC = this.PC;
                     this.PC = parseInt("0x" + _MemoryHandler.read(this.PC + 2) + _MemoryHandler.read(this.PC + 1));
-                    this.Acc = parseInt("0x" + _MemoryHandler.read(this.PC));
-                    this.PC = oldPC + 3;
-                    _MemoryHandler.updateMem();
+                    if(this.checkbounds(this.PC))
+                    {
+                        this.Acc = parseInt("0x" + _MemoryHandler.read(this.PC));
+                        this.PC = oldPC + 3;
+                        _MemoryHandler.updateMem();
+                    }
+                    else
+                    {
+                        this.PC = oldPC;
+                        _StdOut.putText("Index out of bounds error on process " + _currentProcess);
+                        this.storeInPCB(_currentProcess);
+                        _currentProcess = 0;
+
+                    }
                     break;
                 }
                 case "AE":
@@ -102,9 +174,19 @@ module TSOS {
                     //Load x register from memory
                     var oldPC = this.PC;
                     this.PC = parseInt("0x" + _MemoryHandler.read(this.PC + 2) + _MemoryHandler.read(this.PC + 1));
-                    this.Xreg = parseInt("0x" + _Memory[this.PC]);
-                    this.PC = oldPC + 3;
-                    _MemoryHandler.updateMem();
+                    if(this.checkbounds(this.PC))
+                    {
+                        this.Xreg = parseInt("0x" + _Memory[this.PC]);
+                        this.PC = oldPC + 3;
+                        _MemoryHandler.updateMem();
+                    }
+                    else
+                    {
+                        this.PC = oldPC;
+                        _StdOut.putText("Index out of bounds error on process " + _currentProcess);
+                        this.storeInPCB(_currentProcess);
+                        _currentProcess = 0;
+                    }
                     break;
                 }
                 case "A0":
@@ -142,10 +224,24 @@ module TSOS {
                         if (this.PC > 255 + ((_currentProcess - 1 ) * 256))
                         {
                             this.PC = this.PC - 255;
+                            if(!this.checkbounds(this.PC))
+                            {
+                                this.PC = this.PC + 255;
+                                _StdOut.putText("Index out of bounds error on process " + _currentProcess);
+                                this.storeInPCB(_currentProcess);
+                                _currentProcess = 0;
+                            }
                         }
                         else
                         {
                             this.PC = this.PC + 1;
+                            if(!this.checkbounds(this.PC))
+                            {
+                                this.PC = this.PC - 1;
+                                _StdOut.putText("Index out of bounds error on process " + _currentProcess);
+                                this.storeInPCB(_currentProcess);
+                                _currentProcess = 0;
+                            }
                         }
                         this.PC = this.PC + 1;
                     }
@@ -168,32 +264,48 @@ module TSOS {
                     //First get memory variable
                     var oldPC = this.PC;
                     this.PC = parseInt("0x" + _MemoryHandler.read(this.PC + 2) + _MemoryHandler.read(this.PC + 1));
-                    var temp = parseInt("0x" + _MemoryHandler.read(this.PC));
-                    
-                    if(temp == this.Xreg)
+                    if(this.checkbounds(this.PC)) 
                     {
-                        this.Zflag = 1;
+                        var temp = parseInt("0x" + _MemoryHandler.read(this.PC));
+                        if (temp == this.Xreg) {
+                            this.Zflag = 1;
+                        }
+                        else {
+                            this.Zflag = 0;
+                        }
+                        this.PC = oldPC + 3;
+                        _MemoryHandler.updateMem();
+                    }
                     else
                     {
-                        this.Zflag = 0;
+                        this.PC = oldPC;
+                        _StdOut.putText("Index out of bounds error on process " + _currentProcess);
+                        this.storeInPCB(_currentProcess);
+                        _currentProcess = 0;
                     }
-                    }
-                    this.PC = oldPC + 3;
-                    _MemoryHandler.updateMem();
                     break;
                 }
                 case "EE":
                 {
-                    //Increment the byte
-                    //First read it
                     var oldPC = this.PC;
                     this.PC = parseInt("0x" + _MemoryHandler.read(this.PC + 2) + _MemoryHandler.read(this.PC + 1));
-                    var temp = parseInt("0x" + _MemoryHandler.read(this.PC));
-                    temp = temp + 1;
-                    _MemoryHandler.load(temp, this.PC);
-                    _MemoryHandler.updateMem();
-                    break;
+                    if(this.checkbounds(this.PC))
+                    {
+                        var temp = parseInt("0x" + _MemoryHandler.read(this.PC));
+                        temp = temp + 1;
+                        _MemoryHandler.load(temp, this.PC);
+                        _MemoryHandler.updateMem();
+                        this.PC = oldPC + 3;
+                    }
+                    else
+                    {
 
+                            this.PC = oldPC;
+                            _StdOut.putText("Index out of bounds error on process " + _currentProcess);
+                            this.storeInPCB(_currentProcess);
+                            _currentProcess = 0;
+                    }
+                    break;
                 }
                 case "FF":
                 {
@@ -221,7 +333,6 @@ module TSOS {
                 case "00":
                 {
                     //Break
-                   this.isExecuting = false;
                     _CPU.storeInPCB(_currentProcess);
                     _MemoryHandler.updateMem();
                     document.getElementById("btnStep").disabled = true;
@@ -242,16 +353,23 @@ module TSOS {
                 {
                     //Store to memory
                     var memLoc = parseInt("0x" + _MemoryHandler.read(this.PC + 2) + _MemoryHandler.read(this.PC + 1));
-                    if(this.Acc < 16)
+                    if(this.checkbounds(memLoc))
                     {
-                        _MemoryHandler.load(("0" + this.Acc), memLoc);
+                        if (this.Acc < 16) {
+                            _MemoryHandler.load(("0" + this.Acc), memLoc);
+                        }
+                        else {
+                            _MemoryHandler.load(this.Acc, memLoc);
+                        }
+                        this.PC += 3;
+                        _MemoryHandler.updateMem();
                     }
                     else
                     {
-                        _MemoryHandler.load(this.Acc, memLoc);
+                        _StdOut.putText("Index out of bounds error on process " + _currentProcess);
+                        this.storeInPCB(_currentProcess);
+                        _currentProcess = 0;
                     }
-                    this.PC += 3;
-                    _MemoryHandler.updateMem();
                     break;
                 }
                 default:
