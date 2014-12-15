@@ -103,8 +103,8 @@ var TSOS;
             _Kernel.krnBootstrap();
             
             //update memory
-            _MemoryHandler.updateMem();
             _ReadyQueue = new TSOS.Queue();
+            _MemoryHandler.updateMem();
         };
         
         Control.hostBtnStep_click = function (btn) {
