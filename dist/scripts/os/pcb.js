@@ -8,6 +8,8 @@ var TSOS;
             this.Xreg = 0;
             this.Yreg = 0;
             this.Zflag = 0;
+            this.base = 0;
+            this.limit = 0;
             this.PID = 0;
         }
 
@@ -26,7 +28,7 @@ var TSOS;
 
         //Loads values of PCB to CPU
         PCB.prototype.loadToCPU = function () {
-            _CPU.load(this.PC, this.Acc, this.Xreg, this.Yreg, this.Zflag);
+            _CPU.load(this.PC, this.Acc, this.Xreg, this.Yreg, this.Zflag, this.base, this.limit);
         };
 
         //Method to store the parameters to this PCB
@@ -45,6 +47,14 @@ var TSOS;
         PCB.prototype.setPCval = function (val) {
             this.PC = val;
         };
+        
+        PCB.prototype.setLimit = function (val) {
+            this.limit = val;
+        };
+
+        PCB.prototype.setBase = function (val) {
+            this.base = val;
+        };
 
         PCB.prototype.printToScreen = function () {
             _MemoryElement.value += "\n";
@@ -53,6 +63,8 @@ var TSOS;
             _MemoryElement.value += "Xreg: " + this.Xreg + "|";
             _MemoryElement.value += "Yreg: " + this.Yreg + "|";
             _MemoryElement.value += "Zflag: " + this.Zflag + "|";
+            _MemoryElement.value += "Base: " + this.base + "|";
+            _MemoryElement.value += "Limit: " + this.limit + "|";
             _MemoryElement.value += "PCBID: " + this.PID;
         };
         return PCB;
