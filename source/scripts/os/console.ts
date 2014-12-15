@@ -65,7 +65,7 @@ module TSOS {
                             var currentBuffer = this.buffer.toString();
                             var returnBuffer = "";
                             var foundMatch = false;
-                            var currentCommands = ["ver","help","shutdown","cls","man","trace","rot13","prompt","load","flushmem", "bsod","status","datetime"];
+                            var currentCommands = ["ver","help","shutdown","cls","man","trace","rot13","prompt","quantum","load","runall","running","killproc","flushmem","bsod","status","datetime"];
                             for(var k = 0; k < currentCommands.length; k++) {
                                 if ((this.contains(currentBuffer, currentCommands[k])) && foundMatch == false) {
                                     currentBuffer = currentCommands[k];
