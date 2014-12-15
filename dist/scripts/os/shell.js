@@ -53,6 +53,10 @@ var TSOS;
             sc = new TSOS.ShellCommand(this.shellPrompt, "prompt", "<string> - Sets the prompt.");
             this.commandList[this.commandList.length] = sc;
             
++            //set quantum
++            sc = new TSOS.ShellCommand(this.shellQuantum, "quantum", "<int> -Sets the quantum for round robin scheduling");
++            this.commandList[this.commandList.length] = sc;
+
             //load
             sc = new TSOS.ShellCommand(this.shellLoad, "load", "- Loads the program input area value");
             this.commandList[this.commandList.length] = sc;
@@ -61,12 +65,24 @@ var TSOS;
             sc = new TSOS.ShellCommand(this.shellRun, "run", "<int> - Runs the process with the given pid");
             this.commandList[this.commandList.length] = sc;
 
+            //run all processes
+            sc = new TSOS.ShellCommand(this.shellRunAll, "runall", "-Runs all processes in memory");
+            this.commandList[this.commandList.length] = sc;
+
             //step
             sc = new TSOS.ShellCommand(this.shellStep, "step", "<int> -Runs the process in single step mode");
             this.commandList[this.commandList.length] = sc;
             
+            //all running processes
+            sc = new TSOS.ShellCommand(this.shellRunning, "running", "-Lists all running processes");
+            this.commandList[this.commandList.length] = sc;
+
+            //kill process
+            sc = new TSOS.ShellCommand(this.shellKillProcess, "killproc", "<int> -Kills the specified process ");
+            this.commandList[this.commandList.length] = sc;
+            
             //flush memory
-            sc = new TSOS.ShellCommand(this.shellClearMem, "flushmem", "-Flushes contents in memory");
+            sc = new TSOS.ShellCommand(this.shellFlushMem, "flushmem", "-Flushes contents in memory");
             this.commandList[this.commandList.length] = sc;
 
             //bsod
@@ -292,6 +308,20 @@ var TSOS;
             }
         };
         
+        //Function to set quantum
+        Shell.prototype.shellQuantum = function (q) {
+            if (q > 0) {
+                if (!_CPU.isExecuting) {
+                    _quantum = q;
+                    _StdOut.putText("Quantum is: " + _quantum);
+                } else {
+                    _StdOut.putText("Wait for CPU to complete execution before changing quantum.");
+                }
+            } else {
+                _StdOut.putText("Not a valid value for quantum.");
+            }
+        };
+
         //Function to load program
         Shell.prototype.shellLoad = function () 
          {
@@ -341,6 +371,8 @@ var TSOS;
                     var test = new TSOS.PCB();
                     test.setPID(_savePID);
                     test.setPCval(256 * (_savePID - 1));
+                    test.setBase(256 * (_savePID - 1));
+                    test.setLimit(test.base + 255);
 
                     if (_savePID == 3) {
                         _savePID = 1;
@@ -364,7 +396,6 @@ var TSOS;
                         _Canvas.focus();
                     }
 
-                    _StdOut.putText("Program is valid and has loaded successfully. The PID is = " + test.PID);
                     _MemoryHandler.updateMem();
                 }
             } 
@@ -375,6 +406,7 @@ var TSOS;
 
             switch (errorFlag) {
                 case 0: {
+                    _StdOut.putText("Program is valid and has loaded successfully. The PID is = " + test.PID);
                     break;
                 }
                 case 1: {
@@ -387,16 +419,31 @@ var TSOS;
             }
         };
         
+        //Function to run a process
         Shell.prototype.shellRun = function (pid) {
             if (_Processes.length >= pid) {
-                _Processes[pid - 1].loadToCPU();
-                _currentProcess = pid;
-                _CPU.isExecuting = true;
+                if (_CPU.isExecuting) {
+                    _ReadyQueue.enqueue(_Processes[pid - 1]);
+                } else {
+                    _Processes[pid - 1].loadToCPU();
+                    _currentProcess = pid;
+                    _CPU.isExecuting = true;
+                }
             } else {
                 _StdOut.putText("No Programs loaded.");
             }
         };
 
+        //Function to run all processes
+        Shell.prototype.shellRunAll = function () {
+            for (var i = 0; i < _Processes.length; i++) {
+                _ReadyQueue.enqueue(_Processes[i]);
+            }
+            _CPU.isExecuting = true;
+            _StdOut.putText("Running all processes");
+        };
+        
+        //Function to step through a process
         Shell.prototype.shellStep = function (pid) {
             if (_Processes.length >= pid) {
                 _Processes[pid - 1].loadToCPU;
@@ -408,6 +455,46 @@ var TSOS;
                 _StdOut.putText("No Programs loaded.");
             }
         };
+
+        //Function to show running processes
+        Shell.prototype.shellRunning = function () {
+            if (_CPU.isExecuting) {
+                _StdOut.putText("Process " + _currentProcess + " in the CPU");
+                var resultQueue = new TSOS.Queue();
+                while (_ReadyQueue.getSize() > 0) {
+                    var pros = _ReadyQueue.dequeue();
+                    _StdOut.putText("Process " + pros.PID + " is running but waiting on the ready queue");
+                    resultQueue.enqueue(pros);
+                }
+                _ReadyQueue = resultQueue;
+            } else {
+                _StdOut.putText("There are no running processes.");
+            }
+        };
+
+        //Function to kill a process
+        Shell.prototype.shellKillProcess = function (pid) {
+            if (_currentProcess = pid) {
+                _CPU.storeInPCB(_currentProcess);
+                _currentProcess = 0;
+            }
+
+            for (var i = 0; i < _ReadyQueue.getSize(); i++) {
+                if (_ReadyQueue[i].PID = pid) {
+                    var flag = false;
+                    var resultQueue = new TSOS.Queue();
+                    while (flag = false) {
+                        var testProcess = _ReadyQueue.dequeue();
+                        if (testProcess.PID != pid) {
+                            resultQueue.enqueue(testProcess);
+                        }
+                        flag = _ReadyQueue.getSize() <= 0;
+                    }
+                    _ReadyQueue = resultQueue;
+                }
+            }
+            _MemoryHandler.updateMem();
+        };
         
         //Function to flush memory
         Shell.prototype.shellFlushMem = function () {
@@ -416,6 +503,7 @@ var TSOS;
             }
             _currentProcess = 0;
             _Processes = new Array();
+            _MemoryHandler.updateMem();
             _StdOut.putText("Memory flushed.");
         };
 
