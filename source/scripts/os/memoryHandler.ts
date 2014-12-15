@@ -108,6 +108,15 @@ module TSOS {
                     break;
                 }
             }
+            _MemoryElement.value += "\nReady queue: ";
+            var resultQueue = new TSOS.Queue;
+            while(_ReadyQueue.getSize() > 0)
+            {
+                var testProcess = _ReadyQueue.dequeue();
+               _MemoryElement.value +=  testProcess.PID + " ";
+                resultQueue.enqueue(testProcess);
+            }
+            _ReadyQueue = resultQueue;
         }
     }
 }
