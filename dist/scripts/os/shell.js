@@ -52,6 +52,50 @@ var TSOS;
             // prompt <string>
             sc = new TSOS.ShellCommand(this.shellPrompt, "prompt", "<string> - Sets the prompt.");
             this.commandList[this.commandList.length] = sc;
+            
++            //set quantum
++            sc = new TSOS.ShellCommand(this.shellQuantum, "quantum", "<int> -Sets the quantum for round robin scheduling");
++            this.commandList[this.commandList.length] = sc;
+
+            //load
+            sc = new TSOS.ShellCommand(this.shellLoad, "load", "- Loads the program input area value");
+            this.commandList[this.commandList.length] = sc;
+            
+            //run
+            sc = new TSOS.ShellCommand(this.shellRun, "run", "<int> - Runs the process with the given pid");
+            this.commandList[this.commandList.length] = sc;
+
+            //run all processes
+            sc = new TSOS.ShellCommand(this.shellRunAll, "runall", "-Runs all processes in memory");
+            this.commandList[this.commandList.length] = sc;
+
+            //step
+            sc = new TSOS.ShellCommand(this.shellStep, "step", "<int> -Runs the process in single step mode");
+            this.commandList[this.commandList.length] = sc;
+            
+            //all running processes
+            sc = new TSOS.ShellCommand(this.shellRunning, "running", "-Lists all running processes");
+            this.commandList[this.commandList.length] = sc;
+
+            //kill process
+            sc = new TSOS.ShellCommand(this.shellKillProcess, "killproc", "<int> -Kills the specified process ");
+            this.commandList[this.commandList.length] = sc;
+            
+            //flush memory
+            sc = new TSOS.ShellCommand(this.shellFlushMem, "flushmem", "-Flushes contents in memory");
+            this.commandList[this.commandList.length] = sc;
+
+            //bsod
+            sc = new TSOS.ShellCommand(this.shellBSOD, "bsod", "- Causes bsod");
+            this.commandList[this.commandList.length] = sc;
+
+            //status
+            sc = new TSOS.ShellCommand(this.shellStatusUpdate, "status", "<string> - Sets the status");
+            this.commandList[this.commandList.length] = sc;
+
+            //Data&Time
+            sc = new TSOS.ShellCommand(this.shellDateTime, "datetime", "- Self-explanatory.");
+            this.commandList[this.commandList.length] = sc;
 
             // processes - list the running processes and their IDs
             // kill <id> - kills the specified process id.
@@ -131,7 +175,7 @@ var TSOS;
             buffer = TSOS.Utils.trim(buffer);
 
             // 2. Lower-case it.
-            buffer = buffer.toLowerCase();
+            buffer = buffer.substring(0, buffer.indexOf(" ")).toLowerCase() + buffer.substring(buffer.indexOf(" ");
 
             // 3. Separate on spaces so we can determine the command and command-line args, if any.
             var tempList = buffer.split(" ");
@@ -262,6 +306,274 @@ var TSOS;
             } else {
                 _StdOut.putText("Usage: prompt <string>  Please supply a string.");
             }
+        };
+        
+        //Function to set quantum
+        Shell.prototype.shellQuantum = function (q) {
+            if (q > 0) {
+                if (!_CPU.isExecuting) {
+                    _quantum = q;
+                    _StdOut.putText("Quantum is: " + _quantum);
+                } else {
+                    _StdOut.putText("Wait for CPU to complete execution before changing quantum.");
+                }
+            } else {
+                _StdOut.putText("Not a valid value for quantum.");
+            }
+        };
+
+        //Function to load program
+        Shell.prototype.shellLoad = function () 
+         {
+            var aProgram = _ProgramInput.value.toString().split(" ");
+            var errorFlag = 0;
+            var isValid = true;
+
+            for (var j = 0; j < aProgram.length; j++) 
+             {
+                var text = aProgram[j];
+                for (var i = 0; i < text.length; i++) 
+                 {
+                    var charCode = text.charCodeAt(i);
+                    var char = text[i];
+                    if ((charCode >= 48 && char <= 57) || ((charCode >= 65 && charCode <= 70) && char == char.toUpperCase())) 
+                     {
+                        isValid = isValid && true;
+                    } 
+                     else 
+                     {
+                        isValid = false;
+                    }
+                }
+                if (text.length > 2 || text.length == 0) 
+                 {
+                    isValid = false;
+                }
+            }
+
+            if (isValid) 
+            {
+                //check ready queue
+                var readyFlag = false;
+                if (!_ReadyQueue.isEmpty()) {
+                    for (var k = 0; k < _ReadyQueue.getSize(); j++) {
+                        var targetProcess = _ReadyQueue.dequeue();
+                        var targetPID = targetProcess.getPID();
+                        if (_savePID == targetPID) {
+                            readyFlag = true;
+                        }
+                        _ReadyQueue.enqueue(targetProcess);
+                    }
+                 }
+                if (_savePID == _currentProcess || readyFlag == true) {
+                    errorFlag = 2;
+                } else {
+                    var test = new TSOS.PCB();
+                    test.setPID(_savePID);
+                    test.setPCval(256 * (_savePID - 1));
+                    test.setBase(256 * (_savePID - 1));
+                    test.setLimit(test.base + 255);
+
+                    if (_savePID == 3) {
+                        _savePID = 1;
+                    } else {
+                        _savePID = _savePID + 1;
+                    }
+
+                    //Handle multiple Processes
+                    if (_Processes.length < 3) {
+                        _Processes = _Processes.concat(test);
+                        _currentProcess = test.PID;
+                    } else {
+                        _Processes[test.PID] = test;
+                        _currentProcess = test.PID;
+                    }
+
+                    var offset = 256 * (_Processes.length - 1);
+                    for (var h = 0; h < aProgram.length; h++) {
+                        _MemoryHandler.load(aProgram[h], h + offset);
+                        _MemoryElement.focus();
+                        _Canvas.focus();
+                    }
+
+                    _MemoryHandler.updateMem();
+                }
+            } 
+            else 
+            {
+                errorFlag = 1;
+            }
+
+            switch (errorFlag) {
+                case 0: {
+                    _StdOut.putText("Program is valid and has loaded successfully. The PID is = " + test.PID);
+                    break;
+                }
+                case 1: {
+                    _StdOut.putText("Program is not valid. Use only spaces, 0-9, and A-F.");
+                    break;
+                }
+                case 2:
+                    _StdOut.putText("Program not loaded due to target being either on the ready queue or currently in the CPU.");
+                    break;
+            }
+        };
+        
+        //Function to run a process
+        Shell.prototype.shellRun = function (pid) {
+            if (_Processes.length >= pid) {
+                if (_CPU.isExecuting) {
+                    _ReadyQueue.enqueue(_Processes[pid - 1]);
+                } else {
+                    _Processes[pid - 1].loadToCPU();
+                    _currentProcess = pid;
+                    _CPU.isExecuting = true;
+                }
+            } else {
+                _StdOut.putText("No Programs loaded.");
+            }
+        };
+
+        //Function to run all processes
+        Shell.prototype.shellRunAll = function () {
+            for (var i = 0; i < _Processes.length; i++) {
+                _ReadyQueue.enqueue(_Processes[i]);
+            }
+            _CPU.isExecuting = true;
+            _StdOut.putText("Running all processes");
+        };
+        
+        //Function to step through a process
+        Shell.prototype.shellStep = function (pid) {
+            if (_Processes.length >= pid) {
+                _Processes[pid - 1].loadToCPU;
+                _CPU.isExecuting = true;
+                _SteppingMode = true;
+                document.getElementById("btnStep").disabled = false;
+                _currentProcess = pid;
+            } else {
+                _StdOut.putText("No Programs loaded.");
+            }
+        };
+
+        //Function to show running processes
+        Shell.prototype.shellRunning = function () {
+            if (_CPU.isExecuting) {
+                _StdOut.putText("Process " + _currentProcess + " in the CPU");
+                var resultQueue = new TSOS.Queue();
+                while (_ReadyQueue.getSize() > 0) {
+                    var pros = _ReadyQueue.dequeue();
+                    _StdOut.putText("Process " + pros.PID + " is running but waiting on the ready queue");
+                    resultQueue.enqueue(pros);
+                }
+                _ReadyQueue = resultQueue;
+            } else {
+                _StdOut.putText("There are no running processes.");
+            }
+        };
+
+        //Function to kill a process
+        Shell.prototype.shellKillProcess = function (pid) {
+            if (_currentProcess = pid) {
+                _CPU.storeInPCB(_currentProcess);
+                _currentProcess = 0;
+            }
+
+            for (var i = 0; i < _ReadyQueue.getSize(); i++) {
+                if (_ReadyQueue[i].PID = pid) {
+                    var flag = false;
+                    var resultQueue = new TSOS.Queue();
+                    while (flag = false) {
+                        var testProcess = _ReadyQueue.dequeue();
+                        if (testProcess.PID != pid) {
+                            resultQueue.enqueue(testProcess);
+                        }
+                        flag = _ReadyQueue.getSize() <= 0;
+                    }
+                    _ReadyQueue = resultQueue;
+                }
+            }
+            _MemoryHandler.updateMem();
+        };
+        
+        //Function to flush memory
+        Shell.prototype.shellFlushMem = function () {
+            for (var i = 0; i < _Memory.length; i++) {
+                _MemoryHandler.load("00", i);
+            }
+            _currentProcess = 0;
+            _Processes = new Array();
+            _MemoryHandler.updateMem();
+            _StdOut.putText("Memory flushed.");
+        };
+
+        //Function to cause bsod
+        Shell.prototype.shellBSOD = function () {
+            // Call Kernel trap
+            _Kernel.krnTrapError("It broke.");
+        };
+
+        //Function to update status
+        Shell.prototype.shellStatusUpdate = function (args) {
+            if (args.length > 0) {
+                var newStatus = args[0];
+                _BarHandler.updateStatus(newStatus);
+                _StdOut.putText("Status Updated");
+            } else {
+                _StdOut.putText("Usage: status <string>  Please supply a string.");
+            }
+        };
+        
+        //Function to get Date/Time
+        Shell.prototype.shellDateTime = function () {
+            var d = new Date();
+            d.setTime(Date.now());
+            var day = d.getDay();
+            var _day = "";
+            var mins = d.getMinutes();
+            var _mins = "";
+            switch (day) {
+                case 0:
+                    _day = "Sun.";
+                    break;
+                case 1:
+                    _day = "Mon.";
+                    break;
+                case 2:
+                    _day = "Tues.";
+                    break;
+                case 3:
+                    _day = "Wed.";
+                    break;
+                case 4:
+                    _day = "Thurs.";
+                    break;
+                case 5:
+                    _day = "Fri.";
+                    break;
+                case 6:
+                    _day = "Sat.";
+                    break;
+                default:
+                    "Not a valid day.";
+                    break;
+           }
+           
+            if (mins < 10) {
+                _mins = "0" + mins;
+            } else {
+                _mins = "" + mins;
+            }
+
+           _StdOut.putText("Date: " + _day + ", " + (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear());
+           _StdOut.advanceLine();
+           var hours = d.getHours();
+           if (hours >= 12) {
+               hours = hours - 12;
+               _StdOut.putText("Time: " + hours + ":" + _mins + ":" + d.getSeconds() + " P.M.");
+           } else {
+               _StdOut.putText("Time: " + hours + ":" + d.getMinutes() + ":" + d.getSeconds() + " A.M.");
+           }
         };
         return Shell;
     })();

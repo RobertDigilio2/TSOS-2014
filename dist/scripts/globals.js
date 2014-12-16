@@ -9,14 +9,35 @@ Operating System Concepts 8th edition by Silberschatz, Galvin, and Gagne.  ISBN 
 // Global "CONSTANTS" (There is currently no const or final or readonly type annotation in TypeScript.)
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.
 //
-var APP_NAME = "TSOS";
-var APP_VERSION = "0.07";
+var APP_NAME = "ROBOS";
+var APP_VERSION = "2.25";
+
+//The Status
+var STATUS = "Type command: status <string> to change your status";
+
+//Status Bar variables
+var _BarCanvas = null;
+var _BarHandler = null;
+var _BarContext = null;
+
+//Memory variables
+var _MemoryHandler = null;
+var _Memory = Array.apply(null, new Array(768)).map(String.prototype.valueOf, "00");
+var _MemoryElement = null;
+
+var _ProgramInput = null;
 
 var CPU_CLOCK_INTERVAL = 100;
+var _Processes = new Array();
+var _currentProcess = 0;
+var _savePID = 1;
+
+var _ReadyQueue = null;
+var _quantum = 6;
 
 var TIMER_IRQ = 0;
+var _SteppingMode = false;
 
-// NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
 var KEYBOARD_IRQ = 1;
 
 //
